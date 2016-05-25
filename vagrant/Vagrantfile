@@ -1,0 +1,30 @@
+Vagrant.configure(2) do |config|
+  config.vm.box = 'debian/jessie64'
+
+  # Enable caching if Cachier is installed.
+  if Vagrant.has_plugin?('vagrant-cachier')
+    config.cache.scope = :box
+  end
+
+  # RabbitMQ AMQP and management plugin.
+  config.vm.network 'forwarded_port', :guest => 5672, :host => 5672
+  config.vm.network 'forwarded_port', :guest => 15672, :host => 15672
+
+  # Sinatra application
+  config.vm.network 'forwarded_port', :guest => 4567, :host => 4567
+
+  # Sync the project directory.
+  config.vm.synced_folder '../software', '/home/vagrant/queue-example',
+                          :nfs => true
+
+  # Sync the supervisor directory.
+  config.vm.synced_folder '../supervisor', '/home/vagrant/supervisor',
+                          :nfs => true
+
+  # Place supervisord.conf file on system.
+  config.vm.provision 'file', :source => 'supervisord.conf',
+                              :destination => '/tmp/supervisord.conf'
+
+  # Provision the system.
+  config.vm.provision 'shell', :path => 'provisioning.sh'
+end
